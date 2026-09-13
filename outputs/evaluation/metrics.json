@@ -1,0 +1,23 @@
+{
+  "model": "RT-DETR-L",
+  "model_path": "D:\\agriculture_object_detection\\models\\best.pt",
+  "split": "test",
+  "mAP50": 0.6809,
+  "mAP50_95": 0.355,
+  "precision": 0.7165,
+  "recall": 0.6138,
+  "classes": {
+    "crop": {
+      "AP50": 0.6983,
+      "AP50_95": 0.357,
+      "precision": 0.6448,
+      "recall": 0.686
+    },
+    "weed": {
+      "AP50": 0.6635,
+      "AP50_95": 0.3529,
+      "precision": 0.7882,
+      "recall": 0.5417
+    }
+  }
+}

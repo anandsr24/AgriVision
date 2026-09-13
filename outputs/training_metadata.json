@@ -1,0 +1,20 @@
+{
+  "model": "RT-DETR-L",
+  "checkpoint": "rtdetr-l.pt",
+  "epochs": 5,
+  "imgsz": 384,
+  "batch": 8,
+  "patience": 8,
+  "seed": 42,
+  "device": "cpu",
+  "os": "Windows-10-10.0.26200-SP0",
+  "python_version": "3.11.15",
+  "torch_version": "2.5.1+cu121",
+  "ultralytics_version": "8.4.148",
+  "cuda_version": null,
+  "gpu": "None (CPU training)",
+  "cpu_info": "Intel64 Family 6 Model 154 Stepping 4, GenuineIntel (12 logical cores, 31.65 GB RAM)",
+  "training_time_seconds": 18692.17,
+  "save_dir": "D:\\agriculture_object_detection\\runs\\detect\\runs\\train\\agrivision_rtdetr",
+  "best_model_path": "D:\\agriculture_object_detection\\models\\best.pt"
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "case_id": 1,
+    "image_id": "agri_0_1028.jpeg",
+    "image_file": "failure_1_agri_0_1028.jpg",
+    "failure_type": "False Positive / Background Clutter",
+    "expected": "12 GT (crop, crop, crop, crop, crop, crop, crop, crop, crop, crop, crop, crop)",
+    "observed": "Spurious crop detection (conf: 0.55) with no ground truth",
+    "root_cause": "Model triggered detection on soil texture, organic debris, or shadowed leaf patterns.",
+    "primary_attribution": "Model Feature Representation / In-Field Lighting & Occlusion",
+    "potential_improvement": "Incorporate multi-scale crop augmentation, hard-negative mining, and higher-resolution inference."
+  },
+  {
+    "case_id": 2,
+    "image_id": "agri_0_1094.jpeg",
+    "image_file": "failure_2_agri_0_1094.jpg",
+    "failure_type": "False Negative / Missed Detection",
+    "expected": "1 GT (crop)",
+    "observed": "Failed to detect crop (size: 424x398px)",
+    "root_cause": "Ground truth object was missed, likely due to small physical scale, partial occlusion, or subtle contrast against surrounding soil.",
+    "primary_attribution": "Model Feature Representation / In-Field Lighting & Occlusion",
+    "potential_improvement": "Incorporate multi-scale crop augmentation, hard-negative mining, and higher-resolution inference."
+  },
+  {
+    "case_id": 3,
+    "image_id": "agri_0_126.jpeg",
+    "image_file": "failure_3_agri_0_126.jpg",
+    "failure_type": "False Positive / Background Clutter",
+    "expected": "1 GT (weed)",
+    "observed": "Spurious weed detection (conf: 0.75) with no ground truth",
+    "root_cause": "Model triggered detection on soil texture, organic debris, or shadowed leaf patterns.",
+    "primary_attribution": "Model Feature Representation / In-Field Lighting & Occlusion",
+    "potential_improvement": "Incorporate multi-scale crop augmentation, hard-negative mining, and higher-resolution inference."
+  },
+  {
+    "case_id": 4,
+    "image_id": "agri_0_1494.jpeg",
+    "image_file": "failure_4_agri_0_1494.jpg",
+    "failure_type": "Crop-vs-Weed Visual Similarity / Class Confusion",
+    "expected": "1 GT (weed)",
+    "observed": "Predicted crop (0.91) instead of weed",
+    "root_cause": "Model confused weed with crop due to morphological leaf similarity or canopy overlap in complex vegetation background.",
+    "primary_attribution": "Model Feature Representation / In-Field Lighting & Occlusion",
+    "potential_improvement": "Incorporate multi-scale crop augmentation, hard-negative mining, and higher-resolution inference."
+  },
+  {
+    "case_id": 5,
+    "image_id": "agri_0_1499.jpeg",
+    "image_file": "failure_5_agri_0_1499.jpg",
+    "failure_type": "False Positive / Background Clutter",
+    "expected": "11 GT (crop, crop, crop, crop, crop, crop, crop, crop, crop, crop, crop)",
+    "observed": "Spurious crop detection (conf: 0.70) with no ground truth",
+    "root_cause": "Model triggered detection on soil texture, organic debris, or shadowed leaf patterns.",
+    "primary_attribution": "Model Feature Representation / In-Field Lighting & Occlusion",
+    "potential_improvement": "Incorporate multi-scale crop augmentation, hard-negative mining, and higher-resolution inference."
+  }
+]

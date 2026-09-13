@@ -1,0 +1,40 @@
+# Environment
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Training artifacts and temporary outputs
+runs/
+*.log
+
+# Raw dataset - do not commit
+data/raw/
+
+# Large/archive files - do not commit
+*.zip
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dataset - do not commit
+data/
+# Keep trained model and evaluation outputs
+!models/
+!outputs/
+!outputs/evaluation/
+!outputs/failure_cases/
+!outputs/predictions/
+!outputs/training_metadata.json
+rtdetr-l.pt
