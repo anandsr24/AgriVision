@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 # Configuration & Constants
 # -----------------------------------------------------------------------------
 DEFAULT_API_URL = os.getenv("API_URL", "http://localhost:8000")
-REQUEST_TIMEOUT_SECONDS = 120
+REQUEST_TIMEOUT_SECONDS = 180
 
 SUGGESTED_QUESTIONS = [
     "How many weeds are present?",
@@ -42,7 +42,7 @@ st.set_page_config(
 def check_api_health(api_url: str) -> Optional[Dict[str, Any]]:
     """Pings the FastAPI /health endpoint."""
     try:
-        res = requests.get(f"{api_url}/health", timeout=5)
+        res = requests.get(f"{api_url}/health", timeout=15)
         if res.status_code == 200:
             return res.json()
         elif res.status_code == 503:
