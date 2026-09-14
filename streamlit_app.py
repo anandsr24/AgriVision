@@ -194,12 +194,12 @@ with col_left:
 
     # Quick Sample Selector in Main Area
     sample_options = {
-        "Or choose a built-in test sample...": None,
-        "Sample 1: Mixed Plot (2 Crops, 1 Weed)": "data/images/train/agri_0_1630.jpeg",
-        "Sample 2: Balanced Plot (1 Crop, 1 Weed)": "data/images/val/agri_0_7985.jpeg",
-        "Sample 3: Dense Crops (Crops Only)": "data/images/test/agri_0_1028.jpeg",
-        "Sample 4: Weed Infestation (5 Weeds)": "data/images/test/agri_0_126.jpeg",
-        "Sample 5: Weed Spotting (3 Weeds)": "data/images/test/agri_0_1017.jpeg",
+    "Or choose a built-in test sample...": None,
+    "Sample 1: Mixed Plot (2 Crops, 1 Weed)": "assets/samples/agri_0_1630.jpeg",
+    "Sample 2: Balanced Plot (1 Crop, 1 Weed)": "assets/samples/agri_0_7985.jpeg",
+    "Sample 3: Dense Crops (Crops Only)": "assets/samples/agri_0_1028.jpeg",
+    "Sample 4: Weed Infestation (5 Weeds)": "assets/samples/agri_0_126.jpeg",
+    "Sample 5: Weed Spotting (3 Weeds)": "assets/samples/agri_0_1017.jpeg",
     }
     main_sample = st.selectbox("Quick Test Samples:", list(sample_options.keys()), key="main_sample_selector")
     if main_sample and sample_options[main_sample]:
