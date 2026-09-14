@@ -8,6 +8,7 @@ that converts raw predictions into clean, structured JSON schemas.
 import io
 import logging
 import time
+import gc
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -83,12 +84,14 @@ class AgriculturalDetector:
 
         t0 = time.perf_counter()
         # Run inference
+                # Run inference
+        gc.collect()
         results = self.model.predict(
             source=image,
             conf=threshold,
             device="cpu",
             imgsz=320,
-            max_det=50,
+            max_det=20,
             verbose=False,
         )
         inference_time_ms = round((time.perf_counter() - t0) * 1000, 2)

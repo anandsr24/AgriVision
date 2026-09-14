@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 # Configuration & Constants
 # -----------------------------------------------------------------------------
 DEFAULT_API_URL = os.getenv("API_URL", "http://localhost:8000")
-REQUEST_TIMEOUT_SECONDS = 30
+REQUEST_TIMEOUT_SECONDS = 120
 
 SUGGESTED_QUESTIONS = [
     "How many weeds are present?",
