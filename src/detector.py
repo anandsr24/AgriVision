@@ -86,7 +86,9 @@ class AgriculturalDetector:
         results = self.model.predict(
             source=image,
             conf=threshold,
-            device=self.device,
+            device="cpu",
+            imgsz=320,
+            max_det=50,
             verbose=False,
         )
         inference_time_ms = round((time.perf_counter() - t0) * 1000, 2)

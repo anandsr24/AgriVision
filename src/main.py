@@ -163,7 +163,10 @@ async def detect_objects(image: UploadFile = File(...)):
     logger.info(f"POST /detect received file: {image.filename}")
     image_bytes = await image.read()
     pil_image = validate_image_file(image, image_bytes)
-
+    # Limit image size for low-memory deployment
+    max_size = 640
+    if max(pil_image.size) > max_size:
+        pil_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
     det = get_detector()
     try:
         results = det.predict(pil_image)
@@ -210,7 +213,10 @@ async def reason_query(
     # 2. For supported questions, validate image and run detector
     image_bytes = await image.read()
     pil_image = validate_image_file(image, image_bytes)
-
+    # Limit image size for low-memory deployment
+    max_size = 640
+    if max(pil_image.size) > max_size:
+        pil_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
     det = get_detector()
     try:
         detection_result = det.predict(pil_image)
