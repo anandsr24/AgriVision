@@ -2,15 +2,10 @@ torch==2.9.0
 torchvision==0.24.0
 ultralytics==8.4.148
 
-fastapi==0.115.0
-uvicorn==0.30.6
-python-multipart==0.0.12
-
 pillow==11.3.0
 numpy==1.26.4
 opencv-python-headless==4.10.0.84
-psutil>=6.0.0
+psutil>=6.0
 pyyaml>=6.0.2
 
 streamlit==1.50.0
-requests>=2.32.3
