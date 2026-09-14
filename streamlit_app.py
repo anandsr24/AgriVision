@@ -7,17 +7,39 @@ Does NOT load the RT-DETR model locally or replicate reasoning logic.
 
 import io
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import requests
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
+
+from src.detector import AgriculturalDetector
+from src.reasoning import ReasoningEngine
 
 # -----------------------------------------------------------------------------
 # Configuration & Constants
 # -----------------------------------------------------------------------------
-DEFAULT_API_URL = os.getenv("API_URL", "http://localhost:8000")
-REQUEST_TIMEOUT_SECONDS = 180
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODEL_PATH = PROJECT_ROOT / "models" / "best.pt"
+
+
+@st.cache_resource(show_spinner="Loading RT-DETR-L model...")
+def load_detector():
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Model not found: {MODEL_PATH}"
+        )
+
+    return AgriculturalDetector(
+        model_path=MODEL_PATH,
+        confidence_threshold=0.50,
+        device="cpu",
+    )
+
+
+@st.cache_resource
+def load_reasoning_engine():
+    return ReasoningEngine()
 
 SUGGESTED_QUESTIONS = [
     "How many weeds are present?",
@@ -39,34 +61,7 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 # Helper Functions: HTTP API Clients & Visualization
 # -----------------------------------------------------------------------------
-def check_api_health(api_url: str) -> Optional[Dict[str, Any]]:
-    """Pings the FastAPI /health endpoint."""
-    try:
-        res = requests.get(f"{api_url}/health", timeout=15)
-        if res.status_code == 200:
-            return res.json()
-        elif res.status_code == 503:
-            return res.json()
-        return None
-    except Exception:
-        return None
 
-
-def call_detect_api(api_url: str, image_bytes: bytes, filename: str = "image.jpg") -> Dict[str, Any]:
-    """Sends image to /detect endpoint."""
-    files = {"image": (filename, image_bytes, "image/jpeg")}
-    res = requests.post(f"{api_url}/detect", files=files, timeout=REQUEST_TIMEOUT_SECONDS)
-    res.raise_for_status()
-    return res.json()
-
-
-def call_reason_api(api_url: str, image_bytes: bytes, question: str, filename: str = "image.jpg") -> Dict[str, Any]:
-    """Sends image and question to /reason endpoint."""
-    files = {"image": (filename, image_bytes, "image/jpeg")}
-    data = {"question": question}
-    res = requests.post(f"{api_url}/reason", files=files, data=data, timeout=REQUEST_TIMEOUT_SECONDS)
-    res.raise_for_status()
-    return res.json()
 
 
 def annotate_image_with_bboxes(image: Image.Image, detections: List[Dict[str, Any]]) -> Image.Image:
@@ -137,23 +132,11 @@ if "active_question" not in st.session_state:
 with st.sidebar:
     st.title("🌾 AgriVision Hub")
     st.markdown("---")
-
-    # API Configuration
-    api_url = st.text_input("FastAPI Base URL", value=DEFAULT_API_URL, help="URL of the running AgriVision FastAPI server.")
-
-    # Live Health Check
-    health_info = check_api_health(api_url)
-    if health_info and health_info.get("status") == "ok":
-        st.success("🟢 **Backend Connected**")
-        st.markdown(f"**Model:** `{health_info.get('model', 'RT-DETR-L')}`")
-        st.markdown(f"**Classes:** `{', '.join(health_info.get('classes', []))}`")
-        st.markdown(f"**Default Confidence:** `{health_info.get('confidence_threshold', 0.50)}`")
-    elif health_info and health_info.get("status") == "degraded":
-        st.warning("🟡 **Backend Degraded (Model Loading/Fallback)**")
-    else:
-        st.error("🔴 **Backend Offline**")
-        st.caption(f"Make sure FastAPI is running:  \n`uvicorn src.main:app --host 0.0.0.0 --port 8000`")
-
+    st.success("🟢 **Local Inference Active**")
+    st.markdown("**Model:** `RT-DETR-L`")
+    st.markdown("**Classes:** `crop, weed`")
+    st.markdown("**Device:** `CPU`")
+    st.markdown("**Confidence:** `0.50`")
     st.markdown("---")
     if st.button("🗑️ Clear Conversation", use_container_width=True):
         st.session_state.messages = []
@@ -213,79 +196,137 @@ with col_left:
                 st.session_state.detection_data = None
                 st.session_state.messages = []
 
-    st.markdown("---")
+        st.markdown("---")
 
     if st.session_state.uploaded_image_bytes:
         try:
-            pil_image = Image.open(io.BytesIO(st.session_state.uploaded_image_bytes)).convert("RGB")
+            pil_image = Image.open(
+                io.BytesIO(st.session_state.uploaded_image_bytes)
+            ).convert("RGB")
 
-            # Fetch detections from /detect if not cached
-            if st.session_state.detection_data is None and health_info:
+            # Run RT-DETR-L locally if detection has not been performed yet
+            if st.session_state.detection_data is None:
                 with st.spinner("Running RT-DETR-L object detector..."):
                     try:
-                        det_result = call_detect_api(
-                            api_url,
-                            st.session_state.uploaded_image_bytes,
-                            filename=st.session_state.uploaded_image_name or "image.jpg",
+                        detector = load_detector()
+
+                        det_result = detector.predict(
+                            pil_image
                         )
+
                         st.session_state.detection_data = det_result
+
                     except Exception as e:
-                        st.error(f"Detection API error: {e}")
+                        st.error(f"Detection error: {e}")
 
             # Draw image with bounding boxes if detections are available
             det_data = st.session_state.detection_data
+
             if det_data and det_data.get("detections"):
-                annotated_img = annotate_image_with_bboxes(pil_image, det_data["detections"])
+                annotated_img = annotate_image_with_bboxes(
+                    pil_image,
+                    det_data["detections"]
+                )
+
                 st.image(
                     annotated_img,
-                    caption=f"{st.session_state.uploaded_image_name} (Annotated with RT-DETR-L)",
+                    caption=(
+                        f"{st.session_state.uploaded_image_name} "
+                        "(Annotated with RT-DETR-L)"
+                    ),
                     use_container_width=True,
                 )
             else:
                 st.image(
                     pil_image,
-                    caption=f"{st.session_state.uploaded_image_name} (Raw Image)",
+                    caption=(
+                        f"{st.session_state.uploaded_image_name} "
+                        "(Raw Image)"
+                    ),
                     use_container_width=True,
                 )
 
             # Expandable Detection Details
-            with st.expander("🔍 View detection details", expanded=False):
+            with st.expander(
+                "🔍 View detection details",
+                expanded=False
+            ):
                 if det_data:
                     counts = det_data.get("counts", {})
+
                     crop_count = counts.get("crop", 0)
                     weed_count = counts.get("weed", 0)
-                    total_count = det_data.get("total_count", crop_count + weed_count)
-                    latency = det_data.get("inference_time_ms", 0.0)
+
+                    total_count = det_data.get(
+                        "total_count",
+                        crop_count + weed_count
+                    )
+
+                    latency = det_data.get(
+                        "inference_time_ms",
+                        0.0
+                    )
 
                     # Quick Metric Badges
                     m1, m2, m3, m4 = st.columns(4)
+
                     m1.metric("🌾 Crops", crop_count)
                     m2.metric("🌿 Weeds", weed_count)
                     m3.metric("📦 Total", total_count)
-                    m4.metric("⚡ Latency", f"{latency:.1f} ms")
+                    m4.metric(
+                        "⚡ Latency",
+                        f"{latency:.1f} ms"
+                    )
 
                     # Detection Table
-                    detections = det_data.get("detections", [])
+                    detections = det_data.get(
+                        "detections",
+                        []
+                    )
+
                     if detections:
                         st.markdown("**Structured Detections:**")
+
                         table_rows = [
                             {
-                                "Class": d.get("class", "").capitalize(),
-                                "Confidence": f"{d.get('confidence', 0.0):.4f}",
-                                "BBox [x1, y1, x2, y2]": str(d.get("bbox", [])),
+                                "Class": d.get(
+                                    "class",
+                                    ""
+                                ).capitalize(),
+                                "Confidence": (
+                                    f"{d.get('confidence', 0.0):.4f}"
+                                ),
+                                "BBox [x1, y1, x2, y2]": str(
+                                    d.get("bbox", [])
+                                ),
                             }
                             for d in detections
                         ]
-                        st.dataframe(table_rows, use_container_width=True)
+
+                        st.dataframe(
+                            table_rows,
+                            use_container_width=True
+                        )
                     else:
-                        st.info("No objects met the current confidence threshold.")
+                        st.info(
+                            "No objects met the current "
+                            "confidence threshold."
+                        )
                 else:
-                    st.info("Detection data not yet loaded. Connect to the backend to run detection.")
+                    st.info(
+                        "Detection data not yet loaded."
+                    )
 
         except Exception as err:
-            st.error(f"Failed to display image: {err}")
+            st.error(
+                f"Failed to display image: {err}"
+            )
+
     else:
-        st.info("👆 Please upload a crop/weed photo above or select a test sample to begin.")
+        st.info(
+            "👆 Please upload a crop/weed photo above "
+            "or select a test sample to begin."
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -364,12 +405,11 @@ with col_right:
             with st.chat_message("assistant", avatar="🌾"):
                 with st.spinner("AgriVision reasoning engine is analyzing..."):
                     try:
-                        reason_result = call_reason_api(
-                            api_url=api_url,
-                            image_bytes=st.session_state.uploaded_image_bytes,
+                        reasoning_engine = load_reasoning_engine()
+                        reason_result = reasoning_engine.reason(
                             question=clean_prompt,
-                            filename=st.session_state.uploaded_image_name or "image.jpg",
-                        )
+                            detection_result=st.session_state.detection_data,
+)
 
                         answer = reason_result.get("answer", "No answer provided.")
                         confidence = reason_result.get("confidence", "insufficient")
@@ -395,24 +435,6 @@ with col_right:
                             "evidence": evidence,
                         })
 
-                    except requests.exceptions.ConnectionError:
-                        err_msg = f"⚠️ Could not connect to FastAPI at `{api_url}`. Please verify that the server is running."
-                        st.error(err_msg)
-                        st.session_state.messages.append({"role": "assistant", "content": err_msg})
-                    except requests.exceptions.Timeout:
-                        err_msg = "⏱️ Request timed out while waiting for the reasoning engine."
-                        st.error(err_msg)
-                        st.session_state.messages.append({"role": "assistant", "content": err_msg})
-                    except requests.exceptions.HTTPError as http_err:
-                        # Extract error detail if available
-                        detail = "HTTP Error"
-                        try:
-                            detail = http_err.response.json().get("detail", str(http_err))
-                        except Exception:
-                            detail = str(http_err)
-                        err_msg = f"❌ API Error ({http_err.response.status_code}): {detail}"
-                        st.error(err_msg)
-                        st.session_state.messages.append({"role": "assistant", "content": err_msg})
                     except Exception as general_err:
                         err_msg = f"❌ An unexpected error occurred: {general_err}"
                         st.error(err_msg)
